@@ -48,20 +48,30 @@ final class PrintController extends Controller
             $direction = 'incoming';
         }
 
+        // ต้องรับตัวกรองชุดเดียวกับหน้าทะเบียน ไม่งั้นสิ่งที่พิมพ์ออกมาจะไม่ตรงกับที่เห็นบนจอ
+        $view = q('view');
+        if ($view !== '' && !isset(DOC_VIEWS[$view])) {
+            $view = '';
+        }
+
         $filters = [
-            'direction' => $direction,
-            'year'      => q('year', (string) be_year()),
-            'date_from' => q('date_from'),
-            'date_to'   => q('date_to'),
-            'status'    => q('status'),
-            'speed'     => q('speed'),
-            'q'         => q('q'),
+            'direction'  => $direction,
+            'year'       => q('year', (string) be_year()),
+            'date_from'  => q('date_from'),
+            'date_to'    => q('date_to'),
+            'status'     => q('status'),
+            'speed'      => q('speed'),
+            'doc_type'   => q('doc_type'),
+            'department' => q('department'),
+            'q'          => q('q'),
+            'view'       => $view,
         ];
 
         if (!Auth::isClerk()) {
             $filters['restrict_user_id']       = Auth::id();
             $filters['restrict_department_id'] = Auth::departmentId();
         }
+        $filters['my_department_id'] = Auth::departmentId();
 
         $this->view('print/register', [
             'title'     => 'ทะเบียน' . DOC_DIRECTIONS[$direction] . ' ปี ' . $filters['year'],
