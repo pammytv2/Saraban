@@ -1,0 +1,50 @@
+# MySQL สำหรับระบบสารบรรณ (ใช้ตอนพัฒนา)
+# ค่าเชื่อมต่อตรงกับค่าเริ่มต้นใน config/database.php จึงไม่ต้องแก้อะไรเพิ่ม
+#
+#   docker compose up -d        เริ่มใช้งาน (ครั้งแรกจะ import schema.sql + seed.sql ให้อัตโนมัติ)
+#   docker compose down         หยุด (ข้อมูลยังอยู่)
+#   docker compose down -v      หยุดและลบข้อมูลทั้งหมด (ครั้งหน้าจะ import ใหม่)
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: saraban-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: saraban
+      TZ: Asia/Bangkok
+    ports:
+      - "3306:3306"
+    volumes:
+      - saraban-mysql-data:/var/lib/mysql
+      # สคริปต์ใน initdb.d จะรันตามลำดับชื่อไฟล์ เฉพาะตอนสร้าง volume ครั้งแรกเท่านั้น
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: saraban-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  saraban-mysql-data:

@@ -1,0 +1,7 @@
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+config/database.local.php
+.backup-ui/
+*.bak
